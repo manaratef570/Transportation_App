@@ -136,8 +136,9 @@ public class Passenger extends User {
      * Function to request a driver
      * @param Source
      * @param Destination 
+     * @return  
      */
-    public void requestRide(String Source , String Destination){
+    public Ride requestRide(String Source , String Destination){
         ArrayList<Driver> results = searchDrivers(Source);
         for(int i = 0 ; i<results.size() ; i++){
             System.out.println("**********************************************");
@@ -150,6 +151,8 @@ public class Passenger extends User {
             System.out.println("**********************************************");
             System.out.println("Suggested Price: "+results.get(i).offer()+"EGP");
         }
+        Ride ride = new Ride(Source , Destination , 0);
+        return ride;
     }
     /**
      * Function to search about specific drivers
