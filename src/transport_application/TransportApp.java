@@ -1,9 +1,15 @@
 package transport_application;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
 
+
+//hamza
 /*
  * Main Class
  */
@@ -50,7 +56,8 @@ public class TransportApp {
         System.out.println("***********************************************");
         System.out.println("(1) View user's ratings");
         System.out.println("(2) Add a new favorite area/s");
-        System.out.println("(3) LogOut");
+        System.out.println("(3) change status ");
+        System.out.println("(4) LogOut");
         System.out.println("***********************************************");
     }
     /**
@@ -61,15 +68,36 @@ public class TransportApp {
         System.out.println("(1) Verfying all pending drivers registrations");
         System.out.println("(2) Suspending an account");
         System.out.println("(3) Add a new admin");
-        System.out.println("(4) LogOut");
+        System.out.println("(4) add discount on specific area");
+        System.out.println("(5) LogOut");
         System.out.println("***********************************************");
     }
+    
+    public static void update_status(Driver driver)
+    {
+        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
+            String user = "root";
+            String pass = "root" ;
+            String query = "update driver set status = '"+driver.get_status()+"' where userName = '"+driver.getUserName()+"' ";
+              try {
+                   Connection conn = DriverManager.getConnection(dbURL, user , pass);
+                   Statement logUpdate = conn.createStatement();
+                   logUpdate.executeUpdate(query);
+            
+                    } catch (SQLException ex) {
+                      System.out.println(ex);
+                     }
+                                     
+    }
+    
     /**
      * Main Function
      * @param args 
      */
     public static void main(String[] args){
+        Admin admin = new Admin("admin" , "admin" , 19777 , "admin@1");//to manage system
         Scanner Input = new Scanner(System.in);
+        Scanner Input_admin = new Scanner(System.in);
         Queue<Driver> pendingDrivers = new LinkedList<>();
         int YorNo = 0 ;
         do{
@@ -92,7 +120,6 @@ public class TransportApp {
                         System.out.println("Enter the mobilePhone");
                         long mobilePhone = Input.nextLong();
                         System.out.println("Wait, the admin will verfy your information.....");
-                        Admin admin = new Admin("admin" , "admin" , 19777 , "admin@1");
                         if(admin.verfyDatauser(userName, password, eMail, mobilePhone)){
                             Passenger passenger = new Passenger(userName , password , mobilePhone , eMail);
                             passenger.signUp(userName, password, eMail, mobilePhone);
@@ -124,16 +151,43 @@ public class TransportApp {
                                     String Source = Input.nextLine();
                                     System.out.println("Enter your destination");
                                     String Destination = Input.nextLine();
+                                    System.out.println("Enter number of passenger ");
+                                    Scanner input2 = new Scanner(System.in);
+                                    int passenger_num = input2.nextInt();
                                     passenger.requestRide(Source, Destination);
                                     System.out.println("Enter your selected driver username");
                                     String selectedDriver = Input.nextLine();
-                                    Driver driver = new Driver("","",0,"",0,0,0,"");
+                                    Driver driver = new Driver("","",0,"",0,0,0,"",0,0);
                                     driver = driver.retriveAllinfo(selectedDriver);
+                                    driver.set_status(1);
+                                    
+                                    update_status( driver );
+                                    
                                     System.out.println("You can call the driver via "+ driver.getMobilePhone());
                                     System.out.println("You trip is completed");
+                                    
                                     System.out.println("Please rate "+driver.getUserName());
                                     int rate =  passenger.rateAdriver();
-                                    passenger.makeAtrip(passenger.getUserName(), driver.getUserName(), Source, Destination, driver.offer() , rate);
+                                    int updated_price=driver.get_price();
+                                    
+                                    if( Destination.equals(admin.get_area()) )//and search in trip tabl and birthday
+                                    {
+                                        discount Discount = new discount_10();
+                                        Ride ride = new Ride( Source , Destination , driver.get_price() , Discount );
+                                        driver.set_price(  ride.getPrice() );
+ 
+                                    }
+                                    
+                                    
+                                    if( passenger_num > 1  ) // 
+                                    {
+                                        discount Discount = new discount_5();
+                                        Ride ride = new Ride( Source , Destination , driver.get_price() , Discount );
+                                        driver.set_price(  ride.getPrice() );
+                                    }
+                                    
+                                 
+                                    passenger.makeAtrip(passenger.getUserName(), driver.getUserName(), Source, Destination,driver.get_price(), rate);//was offer
                                     driver.updateAvgrating(driver.getUserName());
                                     System.out.println("Thanks");
                                     System.out.println("Press (1) to continue and (0) to exit");
@@ -166,7 +220,7 @@ public class TransportApp {
                         long drivingLicense = Input.nextLong();
                         System.out.println("Enter the nationalID");
                         long nationalID = Input.nextLong();
-                        Driver driver = new Driver(userName , password , mobilePhone , eMail , drivingLicense , nationalID , 0 ,"");
+                        Driver driver = new Driver(userName , password , mobilePhone , eMail , drivingLicense , nationalID , 0 ,"",0,0);
                         pendingDrivers.add(driver);
                         System.out.println("Your Info will be verfy and we will notify you if your account is accepted");
                         System.out.println("Thank You");
@@ -180,7 +234,7 @@ public class TransportApp {
                         String UserName = Input.nextLine();
                         System.out.println("Enter the password");
                         String PassWord = Input.nextLine();
-                        Driver driverr = new Driver("","",0,"",0,0,0,"");
+                        Driver driverr = new Driver("","",0,"",0,0,0,"",0,0);
                         if(driverr.logIn(UserName, PassWord)){
                             driverr = driverr.retriveAllinfo(UserName);
                             System.out.println("***Driver Info***");
@@ -211,6 +265,14 @@ public class TransportApp {
                                     YorNo = Input.nextInt();
                                     break;
                                 case 3:
+                                    Scanner input = new Scanner(System.in);
+                                    System.out.println("enter 0 if you want to be active ");
+                                    System.out.println("enter 1 if you want to be disactive ");
+                                    int choice = input.nextInt();
+                                    driverr.change_status(choice);
+                                    
+                                    break;
+                                case 4:
                                     driverr.logOut();
                                     break;
                             }
@@ -224,7 +286,6 @@ public class TransportApp {
                 String userrName = Input.nextLine();
                 System.out.println("Enter the password");
                 String passsword = Input.nextLine();
-                Admin admin = new Admin("","",0,"");
                 if(admin.logIn(userrName, passsword)){
                     admin = admin.retriveAllinfo(userrName);
                     System.out.println("******************************");
@@ -263,25 +324,32 @@ public class TransportApp {
                             break;
                         case 2:
                             System.out.println("Enter the username");
-                            String reporteduser = Input.nextLine();
+                            String reporteduser = Input_admin.nextLine();
                             admin.suspendAuser(reporteduser);
                             System.out.println("Press (1) to continue and (0) to exit");
                             YorNo = Input.nextInt();
                             break;
                         case 3:
                             System.out.println("Enter the username");
-                            String username = Input.nextLine();
+                            String username = Input_admin.nextLine();
                             System.out.println("Enter the passWord");
-                            String passWord = Input.nextLine();
+                            String passWord = Input_admin.nextLine();
                             System.out.println("Enter the mobilePhone");
-                            long mobilephone = Input.nextLong();
+                            long mobilephone = Input_admin.nextLong();
                             System.out.println("Enter the eMail");
-                            String email = Input.nextLine();
+                            String email = Input_admin.nextLine();
                             admin.signUp(username, passWord, email, mobilephone);
                             System.out.println("Press (1) to continue and (0) to exit");
                             YorNo = Input.nextInt();
                             break;
-                        case 4:
+                        case 4 :
+                            System.out.println("Enter the area");
+                            String area = Input_admin.nextLine();
+                            admin.Add_discount(area);
+                            System.out.println("Press (1) to continue and (0) to exit");
+                            YorNo = Input.nextInt();
+                            break;
+                        case 5:
                             admin.logOut();
                             break;
                     }

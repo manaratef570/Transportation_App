@@ -6,15 +6,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Random;
+import java.util.Scanner;
 
 
-public class Driver extends User {
+public class Driver extends User implements observer {
     
     private final long drivinglicense ;
     private final long nationalID ;
     private final float avgRating ;
     private final String favoriteAreas ;
-    
+    private  int price=0 ;
+    private int status = 0;
     /**
      * Parameterized Constructor
      * @param userName
@@ -27,12 +29,14 @@ public class Driver extends User {
      * @param favoriteAreas 
      */
     public Driver(String userName, String password, long mobilePhone, String Email, long drivinglicense , long nationalID ,
-    float avgRating , String favoriteAreas) {
+    float avgRating , String favoriteAreas , int price , int status ) {
         super(userName, password, mobilePhone, Email);
         this.drivinglicense = drivinglicense ;
         this.nationalID = nationalID ;        
         this.avgRating = avgRating ;
         this.favoriteAreas = favoriteAreas ;
+        this.price = price ;
+        this.status=status;
     }
     /**
      * Get Functions
@@ -53,6 +57,36 @@ public class Driver extends User {
     public String[] getAreas(){
         return favoriteAreas.split("-");
     }
+    
+    public void set_price( int price ){
+        this.price=price;
+    }
+    public int get_price(   ){
+        return price;
+    }
+    
+    public void set_status( int status ){
+        this.status=status;
+        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
+            String user = "root";
+            String pass = "root" ;
+            String query = "update driver set status = '"+this.get_status()+"' where userName = '"+this.getUserName()+"' ";
+              try {
+                   Connection conn = DriverManager.getConnection(dbURL, user , pass);
+                   Statement logUpdate = conn.createStatement();
+                   logUpdate.executeUpdate(query);
+            
+                   } 
+              catch (SQLException ex) {
+                      System.out.println(ex);
+                    }
+    }
+    
+    
+    public int get_status( ){
+        return status;
+    }
+    
     /**
      * Function to signUp as a Driver
      * @param username
@@ -75,15 +109,23 @@ public class Driver extends User {
             System.out.println("Error in connection");
         } 
     }
+    
+
     /**
      * Function to suggest a price for a trip
      * @return 
      */
+    
+  /*  
     public int offer(){
         Random rand = new Random(); 
         int price = rand.nextInt(300);
         return price;
     }
+   */
+    
+
+    
     /**
      * Function to update the average rating for a driver
      * @param driverName 
@@ -144,7 +186,7 @@ public class Driver extends User {
         String dbURL = "jdbc:mysql://localhost:3306/transportapp";
         String user = "root";
         String pass = "root" ;
-        Driver D = new Driver("","",0,"",0,0,0,""); ;
+        Driver D = new Driver("","",0,"",0,0,0,"",0,0); ;
          try {
             Connection conn = DriverManager.getConnection(dbURL, user , pass);
             String query = "Select * from driver where userName='"+key+"' " ;
@@ -153,7 +195,7 @@ public class Driver extends User {
             while(result.next()){
                 D = new Driver(result.getString("userName"),result.getString("passWord"),result.getInt("mobilePhone"),
                 result.getString("eMail"),result.getInt("drivinglicense"),result.getInt("nationalID"),
-                result.getFloat("avgRating"),result.getString("favAreas"));
+                result.getFloat("avgRating"),result.getString("favAreas") , result.getInt("price") , result.getInt("status"));
             }
             
         } catch (SQLException ex) {
@@ -217,5 +259,34 @@ public class Driver extends User {
         } catch (SQLException ex) {
             System.out.println("Error in connection");
         } 
+    }
+
+    @Override
+    public void update() {
+        System.out.println("welcome " + this.getUserName() );
+        //System.out.println(" there is trip form  " , source " to " , Destination );
+        System.out.println("enter price " );
+        Scanner input = new Scanner(System.in);
+        int Price ;
+        Price = input.nextInt();
+        this.set_price(Price);
+        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
+        String user = "root";
+        String pass = "root" ;
+        String query = "update driver set price = '"+Price+"' where userName = '"+this.getUserName()+"' ";
+        String query2 = "update driver set status = '"+status+"' where userName = '"+this.getUserName()+"' ";
+        try {
+            Connection conn = DriverManager.getConnection(dbURL, user , pass);
+            Statement logUpdate = conn.createStatement();
+            logUpdate.executeUpdate(query);
+            
+        } catch (SQLException ex) {
+            System.out.println(ex);
+        }
+    }
+    
+    public void change_status(int status)
+    {
+        set_status(status);
     }
 }

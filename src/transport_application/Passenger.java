@@ -8,7 +8,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class Passenger extends User {
+public class Passenger extends User implements subject {
     /**
      * Parameterized Constructor
      * @param userName
@@ -128,7 +128,7 @@ public class Passenger extends User {
             Statement log = conn.createStatement();
             log.executeUpdate(query);
         } catch (SQLException ex) {
-            System.out.println("Error in connection");
+            System.out.println(ex);
         }
         
     }
@@ -138,9 +138,14 @@ public class Passenger extends User {
      * @param Destination 
      * @return  
      */
-    public Ride requestRide(String Source , String Destination){
+    public void requestRide(String Source , String Destination){
+        
+                
         ArrayList<Driver> results = searchDrivers(Source);
+        notify_observers( Source , results);
+        // 
         for(int i = 0 ; i<results.size() ; i++){
+            if( results.get(i).get_status() != 0 )continue;
             System.out.println("**********************************************");
             System.out.println("Driver Profile" + (i+1));
             System.out.println("-----------------------");
@@ -149,10 +154,9 @@ public class Passenger extends User {
             System.out.println("Driver Phone:"+results.get(i).getMobilePhone());
             System.out.println("Driver Rating:"+results.get(i).getRating());
             System.out.println("**********************************************");
-            System.out.println("Suggested Price: "+results.get(i).offer()+"EGP");
+            System.out.println("Suggested Price: "+results.get(i).get_price()+"EGP");
         }
-        Ride ride = new Ride(Source , Destination , 0);
-        return ride;
+            
     }
     /**
      * Function to search about specific drivers
@@ -172,7 +176,7 @@ public class Passenger extends User {
             while(result.next()){
                 Driver D = new Driver(result.getString("userName") , result.getString("passWord")
                 , result.getInt("mobilePhone"), result.getString("eMail") , result.getInt("drivinglicense") , result.getInt("nationalID")
-                , result.getFloat("avgRating") ,  result.getString("favAreas"));
+                , result.getFloat("avgRating") ,  result.getString("favAreas"),result.getInt("price"),result.getInt("status") );
                 customizedDrivers.add(D);
             }        
         } catch (SQLException ex) {
@@ -180,4 +184,24 @@ public class Passenger extends User {
         } 
         return customizedDrivers ;
     } 
+
+    public void subscribe(observer o) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public void unsubscribe(observer o) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public void notify_observers( String Fav_Area ,ArrayList<Driver> results  ) {
+         // get all drivers in favArea
+         
+        for( int i=0 ; i<results.size() ; i++ )
+        {
+            // req(4) (1) check on status of driver
+            if( results.get(i).get_status() != 0 )
+                continue ;
+            results.get(i).update();// inside call offer price and enter price then return it
+        }
+    }
 }

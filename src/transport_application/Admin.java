@@ -6,9 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
+//hamza
 public class Admin extends User{
 
+    String area="";
     /**
      * Parameterized Constructor
      * @param userName
@@ -213,6 +214,8 @@ public class Admin extends User{
      * @param userName 
      */
     public void suspendAuser(String userName){
+        
+        System.out.println("hello");
         String dbURL = "jdbc:mysql://localhost:3306/transportapp";
         String user = "root";
         String pass = "root" ;
@@ -228,5 +231,13 @@ public class Admin extends User{
         } catch (SQLException ex) {
             System.out.println("Error in connection");
         }
+    }
+    
+    public void Add_discount( String area ){
+        this.area = area;
+    }
+    
+    public String get_area(){
+        return area;
     }
 }

@@ -72,4 +72,5 @@ public abstract class User {
      * @return 
      */
     abstract public User retriveAllinfo(String key);
+
 }
