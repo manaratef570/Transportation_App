@@ -11,8 +11,8 @@ package transport_application;
 public class discount_10 implements discount {
 
     @Override
-    public int update_Price(int price) {
-        return (price - (int) (0.1*price) ) ;
+    public float update_Price(float price) {
+        return  (float) ((0.1*price) ) ;
     }
     
 }

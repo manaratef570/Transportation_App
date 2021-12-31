@@ -1,9 +1,17 @@
 package transport_application;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
@@ -69,7 +77,8 @@ public class TransportApp {
         System.out.println("(2) Suspending an account");
         System.out.println("(3) Add a new admin");
         System.out.println("(4) add discount on specific area");
-        System.out.println("(5) LogOut");
+        System.out.println("(5) show events on specific ride");
+        System.out.println("(6) LogOut");
         System.out.println("***********************************************");
     }
     
@@ -90,12 +99,40 @@ public class TransportApp {
                                      
     }
     
+    public static boolean is_firstTrip( String userName )
+    {
+        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
+        String user = "root";
+        String pass = "root" ;
+        boolean Flag = false ;
+        try {
+            Connection conn = DriverManager.getConnection(dbURL, user , pass);
+            String query = "Select * from trip where Passenger=? " ;
+            PreparedStatement log = conn.prepareStatement(query);
+            log.setString(1, userName);
+            ResultSet result = log.executeQuery();
+            Flag = result.next() ;
+        } catch (SQLException ex) {
+            System.out.println("Error in connection");
+        }
+        return Flag;
+    }
+    
+    
     /**
      * Main Function
      * @param args 
      */
-    public static void main(String[] args){
+    public static void main(String[] args) throws ParseException{
+        ArrayList<String> holidays = new ArrayList<String>();
+        holidays.add("06/10");
+        holidays.add("25/01");
+        holidays.add("03/05");
+        holidays.add("30/12");
         Admin admin = new Admin("admin" , "admin" , 19777 , "admin@1");//to manage system
+        Registration_User PS = new Registration_User();
+        Registration_Driver DR = new Registration_Driver();
+        Registration_admin AD = new Registration_admin();
         Scanner Input = new Scanner(System.in);
         Scanner Input_admin = new Scanner(System.in);
         Queue<Driver> pendingDrivers = new LinkedList<>();
@@ -119,10 +156,13 @@ public class TransportApp {
                         String eMail = Input.nextLine();
                         System.out.println("Enter the mobilePhone");
                         long mobilePhone = Input.nextLong();
+                        System.out.println("Enter your birhdate as format ( \"dd-MM-yyyy\") ");
+                        Scanner input2 = new Scanner(System.in);
+                        String birthdate = input2.nextLine();
                         System.out.println("Wait, the admin will verfy your information.....");
                         if(admin.verfyDatauser(userName, password, eMail, mobilePhone)){
-                            Passenger passenger = new Passenger(userName , password , mobilePhone , eMail);
-                            passenger.signUp(userName, password, eMail, mobilePhone);
+                            Passenger passenger = new Passenger(userName , password , mobilePhone , eMail , birthdate);
+                            PS.signUp(userName, password, eMail, mobilePhone,birthdate);
                         }
                         System.out.println("Press (1) to continue and (0) to exit");
                         YorNo = Input.nextInt();
@@ -134,13 +174,14 @@ public class TransportApp {
                         String username = Input.nextLine();
                         System.out.println("Enter the password");
                         String Password = Input.nextLine();
-                        Passenger passenger = new Passenger("","",0,"");
-                        if(passenger.logIn(username, Password)){
+                        Passenger passenger = new Passenger("","",0,"","");
+                        if(PS.logIn(username, Password)){
                             passenger = passenger.retriveAllinfo(username);
                             System.out.println("***Passenger Info***");
                             System.out.println("Username: "+passenger.getUserName());
                             System.out.println("Email: "+passenger.getEmail());
                             System.out.println("Phone: "+passenger.getMobilePhone());
+                            System.out.println("date: "+passenger.get_birthdate());
                             System.out.println("******************************");
                             passengerScreen();
                             int selectedTask = Input.nextInt();
@@ -152,29 +193,48 @@ public class TransportApp {
                                     System.out.println("Enter your destination");
                                     String Destination = Input.nextLine();
                                     System.out.println("Enter number of passenger ");
-                                    Scanner input2 = new Scanner(System.in);
-                                    int passenger_num = input2.nextInt();
-                                    passenger.requestRide(Source, Destination);
+                                    Scanner input3 = new Scanner(System.in);
+                                    int passenger_num = input3.nextInt();
+                                    Ride ride ;
+                                    ride = passenger.requestRide(Source, Destination);
                                     System.out.println("Enter your selected driver username");
                                     String selectedDriver = Input.nextLine();
                                     Driver driver = new Driver("","",0,"",0,0,0,"",0,0);
                                     driver = driver.retriveAllinfo(selectedDriver);
+                                    String Sttime = "10:00AM";
+                                    String endtime = "10:01AM";
+                                    String loctime = "10:10AM";
+                                    String Destime = "10:45Am";
+                                    Events event1 = new Events("captin set price", Sttime , driver.getUserName() , null, driver.get_price());
+                                    Events event2 = new Events("user accepts  price", endtime , driver.getUserName() , passenger.getUserName() , driver.get_price());
                                     driver.set_status(1);
-                                    
+                                    Events event3 = new Events("Driver arrived to the location of user", loctime , driver.getUserName() , passenger.getUserName() , driver.get_price());
                                     update_status( driver );
                                     
                                     System.out.println("You can call the driver via "+ driver.getMobilePhone());
                                     System.out.println("You trip is completed");
-                                    
+                                    Events event4 = new Events("Driver arrived to the Destination of user", Destime , driver.getUserName() , passenger.getUserName() , driver.get_price());
+                                    admin.add_event(event1);
+                                    admin.add_event(event2);
+                                    admin.add_event(event3);
+                                    admin.add_event(event4);
+                                                                        
                                     System.out.println("Please rate "+driver.getUserName());
                                     int rate =  passenger.rateAdriver();
-                                    int updated_price=driver.get_price();
+                                    float updated_price=driver.get_price();
+                                    discount normal = new discount_No();
+                                    SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");  
+                              
+                                    LocalDate date = LocalDate.now();  
+                                    String real_date = date.format(DateTimeFormatter.ISO_DATE);
+                                    float discount=0;
                                     
                                     if( Destination.equals(admin.get_area()) )//and search in trip tabl and birthday
                                     {
                                         discount Discount = new discount_10();
-                                        Ride ride = new Ride( Source , Destination , driver.get_price() , Discount );
-                                        driver.set_price(  ride.getPrice() );
+                                        ride = new Ride( Source , Destination , driver.get_price() , Discount );
+                                        discount=(  ride.getPrice() );
+                                        System.out.println("its your lucky day .. your destination has 10% discount " );
  
                                     }
                                     
@@ -182,12 +242,50 @@ public class TransportApp {
                                     if( passenger_num > 1  ) // 
                                     {
                                         discount Discount = new discount_5();
-                                        Ride ride = new Ride( Source , Destination , driver.get_price() , Discount );
+                                        ride = new Ride( Source , Destination , driver.get_price() , Discount );
+                                        discount+=(  ride.getPrice() );
+                                        System.out.println("because the number of passengers is more than 1 you got 5% discount ");
+                                    }
+                                    
+                                    if( is_firstTrip(passenger.getUserName()) == false )
+                                    {
+                                        discount Discount = new discount_10();
+                                        ride = new Ride( Source , Destination , driver.get_price() , Discount );
+                                        discount+=(  ride.getPrice() );
+                                        System.out.println("its yourfirst trip with us so you got 10% discount ");
+                                    }
+                                    
+                                    for( int i=0 ; i<holidays.size() ; i++ )
+                                    {                                       
+                                        String[] date1 = real_date.split("-");
+                                        String[] date2 = holidays.get(i).split("/");
+                                        // 1-> month , 2-> dayes
+                                       if( ( date1[1].equals(date2[1]) ) && ( date1[2].equals(date2[0]) ) ){
+                                            discount Discount = new discount_5();
+                                            ride = new Ride( Source , Destination , driver.get_price() , Discount );
+                                            discount+=(  ride.getPrice() );
+                                            System.out.println(" its public holiday so you get 5% discount " );
+                                       }
+                                        
+                                    }
+                                    
+                                    float normalPrice=driver.get_price();
+                                    driver.set_price(normalPrice - discount);
+                                    System.out.println(" your total price =  "+ driver.get_price());
+
+                                    
+                                    
+                                    if( passenger.get_birthdate().equals(real_date) )//and search in trip tabl and birthday
+                                    {
+                                        discount Discount = new discount_10();
+                                        ride = new Ride( Source , Destination , driver.get_price() , Discount );
                                         driver.set_price(  ride.getPrice() );
+                                        System.out.println("its your lucky day .. its your birthday you got 10% discount so your price  = " + driver.get_price());
+ 
                                     }
                                     
                                  
-                                    passenger.makeAtrip(passenger.getUserName(), driver.getUserName(), Source, Destination,driver.get_price(), rate);//was offer
+                                    ride.makeAtrip(passenger.getUserName(), driver.getUserName(), Source, Destination,driver.get_price(), rate);//was offer
                                     driver.updateAvgrating(driver.getUserName());
                                     System.out.println("Thanks");
                                     System.out.println("Press (1) to continue and (0) to exit");
@@ -235,7 +333,7 @@ public class TransportApp {
                         System.out.println("Enter the password");
                         String PassWord = Input.nextLine();
                         Driver driverr = new Driver("","",0,"",0,0,0,"",0,0);
-                        if(driverr.logIn(UserName, PassWord)){
+                        if(DR.logIn(UserName, PassWord)){
                             driverr = driverr.retriveAllinfo(UserName);
                             System.out.println("***Driver Info***");
                             System.out.println("Username: "+driverr.getUserName());
@@ -270,7 +368,8 @@ public class TransportApp {
                                     System.out.println("enter 1 if you want to be disactive ");
                                     int choice = input.nextInt();
                                     driverr.change_status(choice);
-                                    
+                                    System.out.println("Press (1) to continue and (0) to exit");
+                                    YorNo = Input.nextInt();
                                     break;
                                 case 4:
                                     driverr.logOut();
@@ -286,13 +385,14 @@ public class TransportApp {
                 String userrName = Input.nextLine();
                 System.out.println("Enter the password");
                 String passsword = Input.nextLine();
-                if(admin.logIn(userrName, passsword)){
-                    admin = admin.retriveAllinfo(userrName);
+                if(AD.logIn(userrName, passsword)){
+                    Admin admin1 = new Admin("","",0,"") ;
+                    admin1 = admin.retriveAllinfo(userrName);
                     System.out.println("******************************");
                     System.out.println("***Admin Info***");
-                    System.out.println("Username: "+admin.getUserName());
-                    System.out.println("Email: "+admin.getEmail());
-                    System.out.println("Phone: "+admin.getMobilePhone());
+                    System.out.println("Username: "+admin1.getUserName());
+                    System.out.println("Email: "+admin1.getEmail());
+                    System.out.println("Phone: "+admin1.getMobilePhone());
                     System.out.println("******************************");
                     adminScreen();
                     int selectedTask = Input.nextInt();
@@ -311,8 +411,8 @@ public class TransportApp {
                                 if(admin.verfyDatauser(pendingDrivers.element().getUserName(), pendingDrivers.element().getPassword(),
                                 pendingDrivers.element().getEmail(), pendingDrivers.element().getMobilePhone() ,
                                 pendingDrivers.element().getDrivinglicense() , pendingDrivers.element().getnationalID())){
-                                    pendingDrivers.element().signUp(pendingDrivers.element().getUserName(), pendingDrivers.element().getPassword(),pendingDrivers.element().getEmail(),
-                                    pendingDrivers.element().getMobilePhone(),pendingDrivers.element().getDrivinglicense(),pendingDrivers.element().getnationalID());
+                                  DR.signUp(pendingDrivers.element().getUserName(), pendingDrivers.element().getPassword(),pendingDrivers.element().getEmail(),
+                                  pendingDrivers.element().getMobilePhone(),pendingDrivers.element().getDrivinglicense(),pendingDrivers.element().getnationalID());
                                 }
                                 else{
                                     return;
@@ -338,7 +438,7 @@ public class TransportApp {
                             long mobilephone = Input_admin.nextLong();
                             System.out.println("Enter the eMail");
                             String email = Input_admin.nextLine();
-                            admin.signUp(username, passWord, email, mobilephone);
+                            AD.signUp(username, passWord, email, mobilephone);
                             System.out.println("Press (1) to continue and (0) to exit");
                             YorNo = Input.nextInt();
                             break;
@@ -349,7 +449,15 @@ public class TransportApp {
                             System.out.println("Press (1) to continue and (0) to exit");
                             YorNo = Input.nextInt();
                             break;
-                        case 5:
+                        case 5 :
+                            System.out.println("enter name of driver to see his events");
+                            Scanner input = new Scanner(System.in);
+                            String driverName = input.nextLine();
+                            admin.show_event(driverName);
+                            System.out.println("Press (1) to continue and (0) to exit");
+                            YorNo = Input.nextInt();
+                            break;
+                        case 6:
                             admin.logOut();
                             break;
                     }

@@ -6,10 +6,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 //hamza
 public class Admin extends User{
 
     String area="";
+    ArrayList<Events> events = new ArrayList<Events>();
     /**
      * Parameterized Constructor
      * @param userName
@@ -142,47 +144,17 @@ public class Admin extends User{
      * @param email
      * @param otherdata 
      */
-    @Override
-    public void signUp(String username, String passWord, String email, long... otherdata) {
-        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
-        String user = "root";
-        String pass = "root" ;
-        try {
-            Connection conn = DriverManager.getConnection(dbURL, user , pass);
-            Statement addUser = conn.createStatement();
-            String query = "Insert Into admin"+"(userName , passWord, eMail , mobilePhone)"
-            +"Values('"+username+"' , '"+passWord+"' , '"+email+"' , '"+otherdata[0]+"')" ;
-            addUser.executeUpdate(query);
-            System.out.println("You are registered successfully");
-        } catch (SQLException ex) {
-            System.out.println("Error in connection");
-        } 
-    }
+    
+    
+    
+    
     /**
      * Function to login as an admin
      * @param username
      * @param passWord
      * @return 
      */
-    @Override
-    public boolean logIn(String username, String passWord) {
-        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
-        String user = "root";
-        String pass = "root" ;
-        boolean Flag = false ;
-        try {
-            Connection conn = DriverManager.getConnection(dbURL, user , pass);
-            String query = "Select * from admin where userName=? and passWord=?" ;
-            PreparedStatement log = conn.prepareStatement(query);
-            log.setString(1, username);
-            log.setString(2, passWord);
-            ResultSet result = log.executeQuery();
-            Flag = result.next() ;
-        } catch (SQLException ex) {
-            System.out.println("Error in connection");
-        }
-        return Flag;
-    }
+   
     /**
      * Function to return all admin data
      * @param key
@@ -239,5 +211,29 @@ public class Admin extends User{
     
     public String get_area(){
         return area;
+    }
+    
+    public void add_event( Events event )
+    {
+        events.add(event);
+    }
+    
+    public void show_event( String username )
+    {
+        if( events.size()==0 )
+             System.out.println("No events");
+        
+        for ( int i=0 ; i<events.size() ; i++ )
+        {
+            if( events.get(i).getDriver().equals(username) )
+            {
+                System.out.println("event name " + events.get(i).getName() );
+                System.out.println("event time " + events.get(i).getTime() );
+                System.out.println("driver name " + events.get(i).getDriver() );
+                System.out.println("passenger name " + events.get(i).getPassenger() );
+                System.out.println(" price " + events.get(i).getPrice() );
+                System.out.println("---------------------------------");
+            }
+        }
     }
 }

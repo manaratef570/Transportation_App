@@ -15,7 +15,7 @@ public class Driver extends User implements observer {
     private final long nationalID ;
     private final float avgRating ;
     private final String favoriteAreas ;
-    private  int price=0 ;
+    private  float price=0 ;
     private int status = 0;
     /**
      * Parameterized Constructor
@@ -58,10 +58,10 @@ public class Driver extends User implements observer {
         return favoriteAreas.split("-");
     }
     
-    public void set_price( int price ){
+    public void set_price( float price ){
         this.price=price;
     }
-    public int get_price(   ){
+    public float get_price( ){
         return price;
     }
     
@@ -94,22 +94,8 @@ public class Driver extends User implements observer {
      * @param email
      * @param otherdata 
      */
-    @Override
-    public void signUp(String username, String passWord, String email, long... otherdata) {
-        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
-        String user = "root";
-        String pass = "root" ;
-        try {
-            Connection conn = DriverManager.getConnection(dbURL, user , pass);
-            Statement addUser = conn.createStatement();
-            String query = "Insert Into driver"+"(userName , passWord, eMail , mobilePhone ,drivinglicense , nationalID )"
-            +"Values('"+username+"' , '"+passWord+"' , '"+email+"' , '"+otherdata[0]+"' , '"+otherdata[1]+"' , '"+otherdata[2]+"')" ;
-            addUser.executeUpdate(query);
-        } catch (SQLException ex) {
-            System.out.println("Error in connection");
-        } 
-    }
     
+  
 
     /**
      * Function to suggest a price for a trip
@@ -157,25 +143,8 @@ public class Driver extends User implements observer {
      * @param passWord
      * @return 
      */
-    @Override
-     public boolean logIn(String userName, String passWord){
-        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
-        String user = "root";
-        String pass = "root" ;
-        boolean Flag = false ;
-        try {
-            Connection conn = DriverManager.getConnection(dbURL, user , pass);
-            String query = "Select * from driver where userName=? and passWord=?" ;
-            PreparedStatement log = conn.prepareStatement(query);
-            log.setString(1, userName);
-            log.setString(2, passWord);
-            ResultSet result = log.executeQuery();
-            Flag = result.next() ;
-        } catch (SQLException ex) {
-            System.out.println("Error in connection");
-        }
-        return Flag;
-    }
+    
+  
      /**
       * Function to return all driver data
       * @param key
@@ -262,10 +231,12 @@ public class Driver extends User implements observer {
     }
 
     @Override
-    public void update() {
+    public void update( String source , String destination ) {
+        
+        
         System.out.println("welcome " + this.getUserName() );
-        //System.out.println(" there is trip form  " , source " to " , Destination );
-        System.out.println("enter price " );
+        System.out.println("there is trip from "+source +" to " + destination );
+        System.out.println(" please offer your price for this trip " );
         Scanner input = new Scanner(System.in);
         int Price ;
         Price = input.nextInt();

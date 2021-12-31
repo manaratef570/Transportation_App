@@ -9,5 +9,5 @@ package transport_application;
  * @author hamza
  */
 public interface observer {
-    public void update( );
+    public void update( String source , String destination);
 }

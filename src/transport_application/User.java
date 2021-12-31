@@ -58,6 +58,8 @@ public abstract class User {
      * @param email
      * @param otherdata 
      */
+    
+    /*
     abstract public void signUp(String username , String passWord , String email ,  long ... otherdata);
     /**
      * Abstract Function to Login
@@ -65,7 +67,9 @@ public abstract class User {
      * @param passWord
      * @return 
      */
-    abstract public  boolean logIn(String username , String passWord);
+    
+    
+   // abstract public  boolean logIn(String username , String passWord);
     /**
      * Abstract Function to return all data
      * @param key

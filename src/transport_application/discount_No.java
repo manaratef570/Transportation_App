@@ -8,11 +8,10 @@ package transport_application;
  *
  * @author hamza
  */
-public class discount_5 implements discount{
-
+public class discount_No implements discount {
     @Override
     public float update_Price(float price) {
-        return  (float) ( (0.05*price) );
+        return 0*price;
     }
     
 }

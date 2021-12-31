@@ -9,5 +9,5 @@ package transport_application;
  * @author hamza
  */
 public interface discount {
-    public int update_Price( int price );
+    public float update_Price( float price );
 }

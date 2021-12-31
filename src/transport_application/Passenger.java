@@ -1,5 +1,6 @@
 package transport_application;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Passenger extends User implements subject {
+    
+    private String birthdate;
     /**
      * Parameterized Constructor
      * @param userName
@@ -16,8 +19,9 @@ public class Passenger extends User implements subject {
      * @param mobilePhone
      * @param Email 
      */
-    public Passenger(String userName, String password, long mobilePhone, String Email) {
+    public Passenger(String userName, String password, long mobilePhone, String Email , String birthdate) {
         super(userName, password, mobilePhone, Email);
+        this.birthdate = birthdate;
     }
     /**
      * LogIn Function for Passenger
@@ -25,25 +29,6 @@ public class Passenger extends User implements subject {
      * @param passWord
      * @return 
      */
-    @Override
-    public boolean logIn(String userName, String passWord){
-        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
-        String user = "root";
-        String pass = "root" ;
-        boolean Flag = false ;
-        try {
-            Connection conn = DriverManager.getConnection(dbURL, user , pass);
-            String query = "Select * from passenger where userName=? and passWord=?" ;
-            PreparedStatement log = conn.prepareStatement(query);
-            log.setString(1, userName);
-            log.setString(2, passWord);
-            ResultSet result = log.executeQuery();
-            Flag = result.next() ;
-        } catch (SQLException ex) {
-            System.out.println("Error in connection");
-        }
-        return Flag;
-    }
     /**
      * SignUp Function for Passenger
      * @param username
@@ -51,22 +36,8 @@ public class Passenger extends User implements subject {
      * @param email
      * @param otherdata 
      */
-    @Override
-    public void signUp(String username, String passWord, String email, long... otherdata) {
-        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
-        String user = "root";
-        String pass = "root" ;
-        try {
-            Connection conn = DriverManager.getConnection(dbURL, user , pass);
-            Statement addUser = conn.createStatement();
-            String query = "Insert Into passenger"+"(userName , passWord, eMail , mobilePhone)"
-            +"Values('"+username+"' , '"+passWord+"' , '"+email+"' , '"+otherdata[0]+"')" ;
-            addUser.executeUpdate(query);
-            System.out.println("You are registered successfully");
-        } catch (SQLException ex) {
-            System.out.println("Error in connection");
-        } 
-    }
+    
+    
     /**
      * Function to return the passenger Info 
      * @param key
@@ -77,7 +48,7 @@ public class Passenger extends User implements subject {
         String dbURL = "jdbc:mysql://localhost:3306/transportapp";
         String user = "root";
         String pass = "root" ;
-        Passenger P = new Passenger("","",0,"");
+        Passenger P = new Passenger("","",0,"","");
          try {
             Connection conn = DriverManager.getConnection(dbURL, user , pass);
             String query = "Select * from passenger where userName='"+key+"' " ;
@@ -85,7 +56,7 @@ public class Passenger extends User implements subject {
             ResultSet result = log.executeQuery(query);
             while(result.next()){
                 P = new Passenger(result.getString("userName"),result.getString("passWord"),result.getInt("mobilePhone"),
-                result.getString("eMail"));
+                result.getString("eMail") , result.getString("birthdate") );
             }
             
         } catch (SQLException ex) {
@@ -117,32 +88,18 @@ public class Passenger extends User implements subject {
      * @param Price
      * @param rating 
      */
-    public void makeAtrip(String passengerUser , String driverUser , String Source , String Destination , int Price , int rating){
-        String dbURL = "jdbc:mysql://localhost:3306/transportapp";
-        String user = "root";
-        String pass = "root" ;
-        try {
-            Connection conn = DriverManager.getConnection(dbURL, user , pass);
-            String query = "Insert Into trip"+"(Passenger , Driver , Source , Destination , Price , Rating)"+
-            "Values('"+passengerUser+"' , '"+driverUser+"' , '"+Source+"' ,'"+Destination+"' , '"+Price+"','"+rating+"')";
-            Statement log = conn.createStatement();
-            log.executeUpdate(query);
-        } catch (SQLException ex) {
-            System.out.println(ex);
-        }
-        
-    }
+    
     /**
      * Function to request a driver
      * @param Source
      * @param Destination 
      * @return  
      */
-    public void requestRide(String Source , String Destination){
+    public Ride requestRide(String Source , String Destination){
         
                 
         ArrayList<Driver> results = searchDrivers(Source);
-        notify_observers( Source , results);
+        notify_observers( Source , Destination , results);
         // 
         for(int i = 0 ; i<results.size() ; i++){
             if( results.get(i).get_status() != 0 )continue;
@@ -156,8 +113,17 @@ public class Passenger extends User implements subject {
             System.out.println("**********************************************");
             System.out.println("Suggested Price: "+results.get(i).get_price()+"EGP");
         }
+         discount normal = new discount_No();
+         Ride ride;
+         ride = new Ride( Source , Destination , 0 , normal );
+         return ride;
             
     }
+    
+    public String get_birthdate(){
+        return birthdate;
+    }
+    
     /**
      * Function to search about specific drivers
      * @param Source
@@ -192,8 +158,9 @@ public class Passenger extends User implements subject {
     public void unsubscribe(observer o) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
-
-    public void notify_observers( String Fav_Area ,ArrayList<Driver> results  ) {
+    
+    @Override
+    public void notify_observers( String source , String destination ,ArrayList<Driver> results  ) {
          // get all drivers in favArea
          
         for( int i=0 ; i<results.size() ; i++ )
@@ -201,7 +168,9 @@ public class Passenger extends User implements subject {
             // req(4) (1) check on status of driver
             if( results.get(i).get_status() != 0 )
                 continue ;
-            results.get(i).update();// inside call offer price and enter price then return it
+            results.get(i).update(source , destination );// inside call offer price and enter price then return it
         }
     }
+
+    
 }
