@@ -6,13 +6,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.APP.API.transport_application.Admin;
-import com.APP.API.transport_application.Driver;
-import com.APP.API.transport_application.Passenger;
-import com.APP.API.transport_application.Registration_Driver;
-import com.APP.API.transport_application.Registration_User;
-import com.APP.API.transport_application.Registration_admin;
-import com.APP.API.transport_application.Ride;
+import com.APP.API.Registration.Registration_Driver;
+import com.APP.API.Registration.Registration_User;
+import com.APP.API.Registration.Registration_admin;
+import com.APP.API.Ride.Ride;
+import com.APP.API.Users.Admin;
+import com.APP.API.Users.Driver;
+import com.APP.API.Users.Passenger;
 
 @RestController
 public class usersController {
@@ -40,27 +40,24 @@ public class usersController {
 		}
 	
 	}
-	/*
+	
 	@GetMapping("/requestRide")
 	private Ride requestRide(@RequestBody Passenger p) 
 	{
-		 Ride ride;
-	return ride.requestRide();
-	}*/
-	@GetMapping("/RetriveAllinfo")
+		
+	return p.requestRide(p.getSource(),p.getDestination(),p.getUserName());
+	}
+	
+	
+	@PostMapping("/RetriveAllinfo")
 	private Passenger retriveAllinfo(@RequestBody Passenger p) 
 	{
+		
 		
 	return p.retriveAllinfo(p.getUserName());
 	}
 
-		@PostMapping("/RequestRide")
-		private Ride requestRide(@RequestBody Passenger p) 
-		{
-		 
-			
-		return p.requestRide( p.getSource() ,  p.getDestination(),p.getUserName());
-		}
+		
 	
 	//Admin
 	@PostMapping("/AdminLogin")
@@ -110,6 +107,19 @@ public class usersController {
 		}
 	
 	}
+	
+
+	@PostMapping("/AddDiscount")
+	private boolean AddDiscount(@RequestBody Admin d) 
+	{
+		
+		d.Add_discount(d.get_area(),d.getUserName());
+			return true;
+	
+	}
+	 
+	
+		
 	//Driver
 	
 	
